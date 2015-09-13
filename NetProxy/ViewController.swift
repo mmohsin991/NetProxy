@@ -57,37 +57,51 @@ class ViewController: UIViewController, NSURLSessionDelegate, NSURLSessionTaskDe
         let getCountryUrl = "http://www.bluewaydesign.com/travelbook/index.php/webservice/getcountries"
         
         let tempUrl = "https://www.google.com"
-        
-        
-        
-        
-        //proxy setting
-        var proxyHost = "10.1.0.11"
-        var proxyPort = NSNumber(integer: 8080)
-        var proxyUsername = "test3"
-        var proxyPassword = "karachi@3"
 
+        var session : NSURLSession!
         
-        var proxyDict : NSDictionary = [
-            "HTTPEnable":1,
-            String(kCFStreamPropertyHTTPProxyHost) : proxyHost,
-            String(kCFStreamPropertyHTTPProxyPort) : proxyPort,
+        let proxyDictionary = CFNetworkCopySystemProxySettings().takeRetainedValue() as Dictionary
+        
+        println(proxyDictionary)
+        
 
-
-            "HTTPSEnable":1,
-            String(kCFStreamPropertyHTTPSProxyHost) : proxyHost,
-            String(kCFStreamPropertyHTTPSProxyPort) : proxyPort,
-        ]
-        
-        
-        var configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration()
-        configuration.connectionProxyDictionary = proxyDict as [NSObject : AnyObject]
-//        configuration.connectionProxyDictionary = CFBridgingRetain(CFNetworkCopySystemProxySettings())
-        
-        
-        let proxyDic = CFNetworkCopySystemProxySettings().takeRetainedValue() as Dictionary
-        
-        println(proxyDic)
+        if proxyDictionary["HTTPEnable"] != nil{
+            
+            
+            //proxy setting
+//            var proxyHost = "10.1.0.11"
+//            var proxyPort = NSNumber(integer: 8080)
+//            var proxyUsername = "test3"
+//            var proxyPassword = "karachi@3"
+            
+            var proxyHost = proxyDictionary["HTTPSProxy"] as! CFStringRef
+            var proxyPort = proxyDictionary["HTTPSPort"] as! CFNumberRef
+            
+            println(proxyHost)
+            println(proxyPort)
+            
+            var proxyDict : NSDictionary = [
+                "HTTPEnable":1,
+                String(kCFStreamPropertyHTTPProxyHost) : proxyHost,
+                String(kCFStreamPropertyHTTPProxyPort) : proxyPort,
+                
+                
+                "HTTPSEnable":1,
+                String(kCFStreamPropertyHTTPSProxyHost) : proxyHost,
+                String(kCFStreamPropertyHTTPSProxyPort) : proxyPort,
+            ]
+            
+            
+            var configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration()
+            configuration.connectionProxyDictionary = proxyDict as [NSObject : AnyObject]
+            //        configuration.connectionProxyDictionary = CFBridgingRetain(CFNetworkCopySystemProxySettings())
+            
+            
+            session = NSURLSession(configuration: configuration, delegate: self, delegateQueue: NSOperationQueue.mainQueue())
+        }
+        else{
+            session = NSURLSession.sharedSession()
+        }
 
         
 //        FTPPasive = 1
@@ -100,12 +114,12 @@ class ViewController: UIViewController, NSURLSessionDelegate, NSURLSessionTaskDe
 //        HTTPSPort = 8080
 //        HTTPSProxy = 10.1.0.11
         
-        self.txtView.text = "\(self.txtView.text) \n \(proxyDic)"
+        self.txtView.text = "\(self.txtView.text) \n \(proxyDictionary)"
         
         //var session = NSURLSession.sharedSession()
         
         // Create a NSURLSession with our proxy aware configuration
-        var session = NSURLSession(configuration: configuration, delegate: self, delegateQueue: NSOperationQueue.mainQueue())
+
 
         
         var request = NSMutableURLRequest(URL: NSURL(string: getCountryUrl)!)
